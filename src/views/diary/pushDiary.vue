@@ -102,6 +102,7 @@
 </template>
 
 <script>
+// import { builtinModules } from "module";
 import { watch } from "vue";
 
 export default {
@@ -149,18 +150,44 @@ export default {
         money: "",
         accompany: "",
         writeTime: "",
-        folder:"",
+        folder: "",
       },
     };
   },
   mounted() {
-    let time = new Date().getTime(); //获取时间戳
-    let random = Math.ceil(Math.random() * 10); //随时数 向上取整 以防取到0
-    let name = time * random; //创建文件名
-    //  alert(name);
-    this.folder = "diary/" + name + "/"; //获取文件名
+    //先获取文章id
+    let id = this.$route.query.id;
+    if (id == null || id == "" || id == undefined) {
+      let time = new Date().getTime(); //获取时间戳
+      let random = Math.ceil(Math.random() * 10); //随时数 向上取整 以防取到0
+      let name = time * random; //创建文件名
+      //  alert(name);
+      this.folder = "diary/" + name + "/"; //获取文件名
+      alert("添加");
+    } else {
+      alert("修改");
+      // 数据回显 根据文章id查询文章 将数据回显到页面中
+      this.queryDiaryById(id);
+    }
   },
   methods: {
+    queryDiaryById(id) {
+      //通过异步请求去获取数据
+      this.postRequest("/queryDiaryById?id=" + id)
+        .then((success) => {
+          //重新为diary对象赋值
+          this.diary = success.data;
+          // 控制页面变量
+          this.showImg = true;
+          //封面
+          this.imgUrl = success.data.cover;
+          // 富文本
+          this.content = success.data.content;
+          //重新设置文件夹信息
+          this.folder = success.data.folder;
+        })
+        .catch((error) => {});
+    },
     /* 预览图片 */
     previewImg(url) {
       this.$hevueImgPreview(url);
@@ -238,8 +265,28 @@ export default {
       }
       //设置定时器 500毫秒后再插入
       setTimeout(() => {
-        this.insert();
+        let id = this.$route.query.id;
+        if (id == null || id == "" || id == undefined) { //判断是否是添加
+          this.insert();
+        } else {
+          //不为空点击发布则是修改
+          this.update();
+        }
       }, 500);
+    },
+    update() {
+      this.diary.cover = this.imgUrl;
+      this.diary.content = this.content;
+      this.diary.uid = JSON.parse(sessionStorage.getItem("user")).id;
+      this.diary.folder = this.folder; //更新文件夹名
+      //发送求改请求
+      this.postRequest('/updateDiary').then(success=>{
+          if(success.code==200){
+              this.$router.replace('/diary');
+          }
+      }).catch(error=>{
+
+      })
     },
     /* 插入数据 */
     insert() {
@@ -247,7 +294,7 @@ export default {
       this.diary.cover = this.imgUrl;
       this.diary.content = this.content;
       this.diary.uid = JSON.parse(sessionStorage.getItem("user")).id;
-      this.diary.folder = this.folder;//更新文件夹名
+      this.diary.folder = this.folder; //更新文件夹名
       //发送插入游记的请求
       this.postRequest("/insertDiary", this.diary)
         .then((success) => {

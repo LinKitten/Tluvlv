@@ -10,27 +10,35 @@
           <div>
             <!--选中样式change_child_1，未选中样式unchange_child_1-->
             <span
-            @click="selectBasic('最新游记')"
-              :class="basic =='最新游记'?'change_child_1' : 'unchange_child_1'"
+              @click="selectBasic('最新游记')"
+              :class="
+                basic == '最新游记' ? 'change_child_1' : 'unchange_child_1'
+              "
               >最新游记</span
             >
             <span
-             @click="selectBasic('最热游记')"
-              :class="basic =='最热游记'?'change_child_1' : 'unchange_child_1'"
+              @click="selectBasic('最热游记')"
+              :class="
+                basic == '最热游记' ? 'change_child_1' : 'unchange_child_1'
+              "
               >最热游记</span
             >
           </div>
           <div>
             <span
-              >人均花费>:
-              <select v-model="money">
-                <option v-for="item in 4" :key="item">{{ item }}</option>
+              >人均花费:
+              <select @change="getDiaryAllByBasic" v-model="money">
+                <option v-for="item in moneys" :value="item" :key="item">
+                  {{ item }}
+                </option>
               </select>
             </span>
             <span
-              >出行天数>:
-              <select v-model="day">
-                <option v-for="item in 4" :key="item">{{ item }}</option>
+              >出行天数:
+              <select @change="getDiaryAllByBasic" v-model="day">
+                <option v-for="item in days" :value="item" :key="item">
+                  {{ item }}
+                </option>
               </select>
             </span>
           </div>
@@ -47,26 +55,29 @@
             <img class="img" :src="article.cover" fit="fill" />
           </div>
           <div class="local_con_left_content_text">
-            <div @click="goIntoContent(article.id)"><!-- 添加点击事件，点击标题触发 跳转到文章 -->
+            <div @click="goIntoContent(article.id)">
+              <!-- 添加点击事件，点击标题触发 跳转到文章 -->
               <!-- 标题 -->
-              <a>{{article.title}}</a> 
+              <a>{{ article.title }}</a>
             </div>
             <div>
               <img :src="article.user.headImg" />
               <div>
-                <span style="color: #a8a8a8">作者</span>：{{article.user.username}}
+                <span style="color: #a8a8a8">作者</span>：{{
+                  article.user.username
+                }}
               </div>
             </div>
             <!--介绍-->
             <div>
-              {{article.abs}}
+              {{ article.abs }}
             </div>
             <div>
               <span class="info_view"
-                ><i class="el-icon-view"></i>{{article.watch}}</span
+                ><i class="el-icon-view"></i>{{ article.watch }}</span
               >
               <span class="info_view"
-                ><i class="el-icon-chat-round"></i>200</span
+                ><i class="el-icon-chat-round"></i>{{article.commentCount}}</span
               >
             </div>
           </div>
@@ -74,15 +85,16 @@
         <!--内容的div:一个内容END-->
         <!-- 分页 begin-->
         <div class="block">
-        <el-pagination
+          <el-pagination
             :total="total"
             :page-size="pageSize"
             :current-page.sync="currentPage"
             @current-change="changeCurrent"
-            layout="prev, pager, next">
-        </el-pagination>
+            layout="prev, pager, next"
+          >
+          </el-pagination>
         </div>
-       <!-- 分页 end-->
+        <!-- 分页 end-->
       </div>
       <!--右边div-->
       <div class="local_con_right">
@@ -102,68 +114,80 @@
         </ul>
       </div>
     </div>
-</div>
+  </div>
 </template>
 
 <script>
-import Head from '@/components/headView.vue'
+import Head from "@/components/headView.vue";
 export default {
-    data(){
-        return{
-            money:2,
-            day:1,
-            diarys:[],//用于接收所有的游记
-            currentPage:1,
-            pageSize:4,
-            total:10,//总页数
-            basic:"最新游记"
-        }
+  data() {
+    return {
+      money: "不限",
+      day: "不限",
+      diarys: [], //用于接收所有的游记
+      currentPage: 1,
+      pageSize: 4,
+      total: 10, //总页数
+      basic: "最新游记",
+      moneys: ["不限", "40k-50k", "30k-40k", "10k-30k", "1-10k"],
+      days: ["不限", "60天-90天", "30天-60天", "10天-30天", "1天-10天"],
+    };
+  },
+  mounted() {
+    //调用getDiaryAllByBasic发送请求
+    this.getDiaryAllByBasic();
+  },
+  methods: {
+    selectBasic(val) {
+      //改变basic
+      this.basic = val;
+      //发送请求
+      this.getDiaryAllByBasic();
     },
-    mounted(){
-      //调用getDiaryAllByBasic发送请求
-        this. getDiaryAllByBasic();
+    getDiaryAllByBasic() {
+      //定义方法
+      //定义参数
+      let param =
+        "currentPage=" +
+        this.currentPage +
+        "&pageSize=" +
+        this.pageSize +
+        "&basic=" +
+        this.basic +
+        "&money=" +
+        this.money +
+        "&day=" +
+        this.day;
+
+      this.postRequest("/getDiaryByBasic?" + param)
+        .then((success) => {
+          this.diarys = success.data.list; //更新游记信息
+          //更新总页数
+          this.total = success.data.total;
+
+        })
+        .catch((error) => {});
     },
-    methods:{
-        selectBasic(val){
-          //改变basic 
-          this.basic=val;
-          //发送请求
-          this.getDiaryAllByBasic();
-        },
-        getDiaryAllByBasic(){//定义方法
-        //定义参数
-        let param = "currentPage="+this.currentPage+"&pageSize="+this.pageSize+"&basic="+this.basic;
-
-            this.postRequest('/getDiaryByBasic?'+param).then(success=>{
-              this.diarys = success.data.list;//更新游记信息
-              //更新总页数
-              this.total= success.data.total;
-
-            }).catch(error=>{
-
-            });
-        },
-        changeCurrent(){
-            //发送请求查询数据
-            this.getDiaryAllByBasic();
-            // alert("分页");
-        },
-        goIntoContent(id){
-          // alert("当前id："+id);
-          //去往游记的详情页面，并携带点击的id的信息
-          this.$router.push({path:'/diaryContent',query:{id:id}});//push返回上一次页面 query携带id过去
-        },
+    changeCurrent() {
+      //发送请求查询数据
+      this.getDiaryAllByBasic();
+      // alert("分页");
     },
-    components:{
-        Head,
-    }
-}
+    goIntoContent(id) {
+      // alert("当前id："+id);
+      //去往游记的详情页面，并携带点击的id的信息
+      this.$router.push({ path: "/diaryContent", query: { id: id } }); //push返回上一次页面 query携带id过去
+    },
+  },
+  components: {
+    Head,
+  },
+};
 </script>
 
 <style lang="scss">
-#diary{
-
-.local_con {
+#diary {
+  .local_con {
     width: 80vw;
     height: auto;
     max-height: 3000px !important;

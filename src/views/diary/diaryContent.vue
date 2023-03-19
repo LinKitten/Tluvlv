@@ -11,13 +11,13 @@
         </div>
         <div class="user_info_gn">
           <div>
-            <i class="el-icon-edit" v-if="showInput"></i>
+            <i class="el-icon-edit"  @click="updateDiary" ></i><!-- v-if="showInput" -->
           </div>
           <div>
             <i
               @click="deleteDiary"
               class="el-icon-delete"
-              v-if="showInput"
+           
             ></i>
           </div>
         </div>
@@ -182,11 +182,15 @@ export default {
       let uid = JSON.parse(sessionStorage.getItem("user")).id;
       let artUId = this.article.id;
       if (uid == artUId) {
-        this.showInput = true; //如果两个一致就改为true
+        this.showInput =true; //如果两个一致就改为true
       }
     },500);
   },
   methods: {
+    //跳转发布页 携带id信息
+    updateDiary(){
+      this.$router.push({path:'/pushDiary',query:{id:this.article.id}});
+    },
     //删除游记
     deleteDiary() {
       //获取当前文章id
